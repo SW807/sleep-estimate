@@ -1,3 +1,0 @@
-[submodule "app/src/main/java/dk/aau/cs/psylog/analysis/module_lib"]
-	path = app/src/main/java/dk/aau/cs/psylog/analysis/module_lib
-	url = https://github.com/SW807/module-lib.git
