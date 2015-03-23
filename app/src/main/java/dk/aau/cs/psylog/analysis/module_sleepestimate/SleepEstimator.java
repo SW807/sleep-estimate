@@ -45,7 +45,8 @@ public class SleepEstimator {
                 //synes dette er mere læseligt
                 //dog nok også mindre efficient
                 List<AccelData> data = extract(cursor);
-                List<NormalizedWithTime> normalizedData = normalizer(data);
+                List<AccelData> movAvg = movingAvg(data);
+                List<NormalizedWithTime> normalizedData = normalizer(movAvg);
 
                 List<Estimations> evaluation = estimate(normalizedData);
                 List<Estimations> toStore = compress(evaluation);
@@ -80,7 +81,24 @@ public class SleepEstimator {
         return null;
     }
 
-    //metode til at normalisere skal implementeres
+
+    public List<AccelData> movingAvg(List<AccelData> input){
+        float alpha = 0.1f;
+        List<AccelData> movAvg = new ArrayList<>();
+        AccelData maiminus1 = movAvg.get(0);
+        for(AccelData datum : input)
+        {
+            AccelData toadd = new AccelData(0, 0, 0, datum.time);
+            toadd.x = alpha*datum.x + (1-alpha)*maiminus1.x;
+            toadd.y = alpha*datum.y + (1-alpha)*maiminus1.y;
+            toadd.z = alpha*datum.z + (1-alpha)*maiminus1.z;
+            movAvg.add(toadd);
+            maiminus1 = toadd;
+        }
+
+        return movAvg;
+    }
+
     public List<NormalizedWithTime> normalizer(List<AccelData> input){
         List<NormalizedWithTime> normalized = new ArrayList<>();
         List<AccelData> diffTable = new ArrayList<>();
