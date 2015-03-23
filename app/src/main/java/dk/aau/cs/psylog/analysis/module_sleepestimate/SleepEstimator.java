@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import dk.aau.cs.psylog.module_lib.DBAccessContract;
 
 public class SleepEstimator {
 
@@ -28,13 +29,11 @@ public class SleepEstimator {
     private long delay;
     private long period;
 
-    private String content = "content://dk.aau.cs.psylog.data_access_layer/";
-
     public SleepEstimator(Context context)
     {
         resolver = context.getApplicationContext().getContentResolver();
-        read = Uri.parse(content + "accelerometer_accelerations");
-        write = Uri.parse(content + "sleepestimate_sleepEstimates");
+        read = Uri.parse(DBAccessContract.DBACCESS_CONTENTPROVIDER + "accelerometer_accelerations");
+        write = Uri.parse(DBAccessContract.DBACCESS_CONTENTPROVIDER + "sleepestimate_sleepEstimates");
 
         timerTask = new TimerTask() {
             @Override

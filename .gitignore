@@ -29,3 +29,6 @@ Thumbs.db
 .gradle
 build/
 *.iml
+
+# Generated files 
+app/src/main/java/dk/aau/cs/psylog/generated/*
