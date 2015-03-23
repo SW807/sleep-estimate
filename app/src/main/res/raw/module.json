@@ -1,0 +1,22 @@
+{
+    "name": "sleepestimate",
+    "_version": 1.0,
+    "tables":[
+        {
+            "name": "sleepEstimates",
+            "columns":[
+                { "name": "estimation", "datatype": "TEXT"}
+                { "name": "startTime", "datatype": "TEXT"}
+                { "name": "endTime", "datatype": "TEXT"}
+            ]
+        }
+    ]
+    "dependencies": [
+        [
+            {
+                "name": "accelerometer",
+                "version":1.0
+            }
+        ]
+    ]
+}
