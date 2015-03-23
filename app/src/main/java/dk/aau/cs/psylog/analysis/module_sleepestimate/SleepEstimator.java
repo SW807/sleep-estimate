@@ -41,12 +41,17 @@ public class SleepEstimator {
                 String[] projection = {"accX", "accY", "accZ", "time"};
                 Cursor cursor = resolver.query(read, projection, null, null, null);
 
-                List<Estimations> evaluation = extract(cursor);
+                //kan skrives som et call
+                //synes dette er mere læseligt
+                //dog nok også mindre efficient
+                List<AccelData> data = extract(cursor);
+                List<NormalizedWithTime> normalizedData = normalizer(data);
 
-                List<Estimations> tostore = compress(evaluation);
+                List<Estimations> evaluation = estimate(normalizedData);
+                List<Estimations> toStore = compress(evaluation);
 
                 ContentValues contentValues = new ContentValues();
-                for (Estimations e: tostore)
+                for (Estimations e: toStore)
                 {
                     contentValues.put("estimation", e.prediction);
                     contentValues.put("startTime", e.startTime);
@@ -59,7 +64,7 @@ public class SleepEstimator {
 
     }
 
-    public List<Estimations> extract(Cursor cursor)
+    public List<AccelData> extract(Cursor cursor)
     {
         List<AccelData> content = new ArrayList<>();
         if (cursor.moveToFirst())
@@ -70,7 +75,7 @@ public class SleepEstimator {
             }while (cursor.moveToNext());
         }
         if (!content.isEmpty()){
-            return estimate(normalizer(content));
+            return content;
         }
         return null;
     }
@@ -150,11 +155,12 @@ public class SleepEstimator {
     public List<Estimations> estimate(List<NormalizedWithTime> input){
         List<Estimations> state = new ArrayList<>();
         int count = 1;
-        int len = input.size();
-        int num = getFourMinWindown(input);
         int j = 1;
         int i = 1;
         int k = 1;
+        int len = input.size();
+        int num = getFourMinWindown(input);
+
         String startTime, endTime;
         int pred;
         while (j <= len - num)
@@ -226,9 +232,6 @@ public class SleepEstimator {
         int i = 1;
         Date startTime = convertTimeString(input.get(0).time);
 
-
-
-
         Boolean condition = true;
         while (condition)
         {
@@ -287,6 +290,5 @@ public class SleepEstimator {
         period = intent.getIntExtra("period", 1000);
         delay = intent.getIntExtra("delay", 0);
     }
-
 
 }
