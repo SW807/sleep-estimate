@@ -1,4 +1,4 @@
-package dk.aau.cs.psylog.analysis.module_sleepestimate;
+package dk.aau.cs.psylog.analysis.sleepestimate;
 
 /**
  * Created by Lars on 20-03-2015.

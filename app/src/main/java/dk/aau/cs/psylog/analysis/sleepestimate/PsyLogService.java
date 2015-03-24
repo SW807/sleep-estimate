@@ -1,4 +1,4 @@
-package dk.aau.cs.psylog.analysis.module_sleepestimate;
+package dk.aau.cs.psylog.analysis.sleepestimate;
 
 import android.app.Service;
 import android.content.Intent;
