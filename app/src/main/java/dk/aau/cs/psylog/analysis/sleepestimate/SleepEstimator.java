@@ -33,7 +33,7 @@ public class SleepEstimator {
     {
         resolver = context.getApplicationContext().getContentResolver();
         read = Uri.parse(DBAccessContract.DBACCESS_CONTENTPROVIDER + "accelerometer_accelerations");
-        write = Uri.parse(DBAccessContract.DBACCESS_CONTENTPROVIDER + "sleepestimate_sleepEstimates");
+        write = Uri.parse(DBAccessContract.DBACCESS_CONTENTPROVIDER + "sleepestimate_sleepestimates");
 
         timerTask = new TimerTask() {
             @Override
@@ -284,7 +284,7 @@ public class SleepEstimator {
     }
 
     public Date convertTimeString(String s){
-        SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-DD hh:mm:ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         Date convertedTime = new Date();
         try {
             convertedTime = dateFormat.parse(s);

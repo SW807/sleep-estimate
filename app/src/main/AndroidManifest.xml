@@ -1,20 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="dk.aau.cs.psylog.analysis.sleepestimate">
+
     <uses-permission android:name="dk.aau.cs.psylog.psylog.READ_DB"/>
     <uses-permission android:name="dk.aau.cs.psylog.psylog.WRITE_DB"/>
 
     <application android:allowBackup="true"
-        android:label="@string/app_name"
+        android:label="Psylog - SleepEstimate"
         android:icon="@mipmap/ic_launcher"
         android:theme="@style/AppTheme">
         <service
             android:name="dk.aau.cs.psylog.analysis.sleepestimate.PsyLogService"
             android:label="Service"
             android:process=":my_process"
-            android:exported="true">
-
-        </service>
-
+            android:exported="true" />
     </application>
 
 </manifest>

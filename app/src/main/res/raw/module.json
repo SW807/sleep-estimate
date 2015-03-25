@@ -3,7 +3,7 @@
     "_version": 1.0,
     "tables":[
         {
-            "name": "sleepEstimates",
+            "name": "sleepestimates",
             "columns":[
                 { "name": "estimation", "datatype": "TEXT"}
                 { "name": "startTime", "datatype": "TEXT"}
@@ -15,7 +15,7 @@
         [
             {
                 "name": "accelerometer",
-                "version":1.0
+                "version": 1.0
             }
         ]
     ]

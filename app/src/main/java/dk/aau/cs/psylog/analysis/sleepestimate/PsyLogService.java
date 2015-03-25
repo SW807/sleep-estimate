@@ -29,7 +29,8 @@ public class PsyLogService extends Service {
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy()
+    {
         estimator.stopAnalysis();
     }
 
