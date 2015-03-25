@@ -71,8 +71,11 @@ public class SleepEstimator {
         if (cursor.moveToFirst())
         {
             do {
-                AccelData toAdd = new AccelData(cursor.getFloat(0), cursor.getFloat(1), cursor.getFloat(2), cursor.getString(3));
-                content.add(toAdd);
+                float accX = cursor.getFloat(cursor.getColumnIndex("accX"));
+                float accY = cursor.getFloat(cursor.getColumnIndex("accY"));
+                float accZ = cursor.getFloat(cursor.getColumnIndex("accZ"));
+                String time = cursor.getString(cursor.getColumnIndex("time"));
+                content.add(new AccelData(accX, accY, accZ, time));
             }while (cursor.moveToNext());
         }
         if (!content.isEmpty()){
