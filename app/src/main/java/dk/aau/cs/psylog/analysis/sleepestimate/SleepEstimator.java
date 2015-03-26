@@ -4,9 +4,9 @@ package dk.aau.cs.psylog.analysis.sleepestimate;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -38,31 +38,42 @@ public class SleepEstimator {
         timerTask = new TimerTask() {
             @Override
             public void run() {
-                String[] projection = {"accX", "accY", "accZ", "time"};
-                Cursor cursor = resolver.query(read, projection, null, null, null);
-
-                //kan skrives som et call
-                //synes dette er mere læseligt
-                //dog nok også mindre efficient
-                List<AccelData> data = extract(cursor);
-                List<AccelData> movAvg = movingAvg(data);
-                List<NormalizedWithTime> normalizedData = normalizer(movAvg);
-
-                List<Estimations> evaluation = estimate(normalizedData);
-                List<Estimations> toStore = compress(evaluation);
-
-                ContentValues contentValues = new ContentValues();
-                for (Estimations e: toStore)
-                {
-                    contentValues.put("estimation", e.prediction);
-                    contentValues.put("startTime", e.startTime);
-                    contentValues.put("endTime", e.endTime);
-                    resolver.insert(write, contentValues);
-                }
+                analyse();
 
             }
         };
 
+    }
+
+    public void analyse()
+    {
+        String[] projection = {"accX", "accY", "accZ", "time"};
+        Cursor cursor = resolver.query(read, projection, null, null, null);
+        Log.e("LARS", "read complete, size "+ cursor.getCount());
+        //kan skrives som et call
+        //synes dette er mere læseligt
+        //dog nok også mindre efficient
+        List<AccelData> data = extract(cursor);
+        Log.e("LARS","extraction size " + data.size()+ " moving to movAVG");
+        List<AccelData> movAvg = movingAvg(data);
+        Log.e("LARS","starting normalize");
+        List<NormalizedWithTime> normalizedData = normalizer(movAvg);
+
+        Log.e("LARS", "starting evaluation");
+        List<Estimations> evaluation = estimate(normalizedData);
+        Log.e("LARS", "compressions");
+        //List<Estimations> toStore = compress(evaluation);
+
+        Log.e("LARS", "starting store");
+        ContentValues contentValues = new ContentValues();
+        for (Estimations e: evaluation)
+        {
+            contentValues.put("estimation", e.prediction);
+            contentValues.put("startTime", e.startTime);
+            contentValues.put("endTime", e.endTime);
+            resolver.insert(write, contentValues);
+        }
+        Log.e("LARS", "Finished");
     }
 
     public List<AccelData> extract(Cursor cursor)
@@ -88,7 +99,7 @@ public class SleepEstimator {
     public List<AccelData> movingAvg(List<AccelData> input){
         float alpha = 0.1f;
         List<AccelData> movAvg = new ArrayList<>();
-        AccelData maiminus1 = movAvg.get(0);
+        AccelData maiminus1 = input.get(0);
         for(AccelData datum : input)
         {
             AccelData toadd = new AccelData(0, 0, 0, datum.time);
@@ -178,12 +189,12 @@ public class SleepEstimator {
         int count = 1;
         int j = 1;
         int i = 1;
-        int k = 1;
+        int k = 0;
         int len = input.size();
         int num = getFourMinWindown(input);
 
         String startTime, endTime;
-        int pred;
+        String pred;
         while (j <= len - num)
         {
             startTime = input.get(j).time;
@@ -191,13 +202,13 @@ public class SleepEstimator {
             float thres = threshhold(input);
             while (i <= num)
             {
-                if (input.get(i+j).intensity < thres)
+                if (input.get(i+j).intensity > thres)
                     count ++;
                 i++;
             }
             if (count < 0.4 * num)
-                pred = 2;
-            else pred = 1;
+                pred = "sleep";
+            else pred = "wake";
 
             state.add(k, new Estimations(pred, startTime, endTime));
 
@@ -266,6 +277,7 @@ public class SleepEstimator {
 
     public List<Estimations> compress (List<Estimations> input)
     {
+        Log.e("LARS", "compressing list of size " + input.size());
         List<Estimations> compressed = new ArrayList<>();
         String currentStart = input.get(0).startTime;
         int i = 0;
@@ -273,12 +285,18 @@ public class SleepEstimator {
         {
             if (i+1 < input.size()) {
                 Estimations current = input.get(i);
+                Log.e("LARS", "compressing " +current.prediction + " and " + input.get(i+1).prediction );
                 if (!(current.prediction.equals(input.get(i + 1).prediction))) {
                     compressed.add(new Estimations(current.prediction, currentStart, current.endTime));
                     currentStart = input.get(i + 1).startTime;
-                }
+                    Log.e("LARS", "they didnt match");
+                }else Log.e("LARS", " they matched");
             }else compressed.add(new Estimations(input.get(i).prediction, currentStart, input.get(i).endTime));
             i++;
+        }
+        for (Estimations e:compressed)
+        {
+            Log.e("LARS", "estimation with " + e.prediction+ " start "+ e.startTime + "end " + e.endTime);
         }
         return compressed;
     }
@@ -292,24 +310,6 @@ public class SleepEstimator {
             e.printStackTrace();
         }
         return convertedTime;
-    }
-
-    public void startAnalysis() {
-        if (timer == null) {
-            timer = new Timer();
-        }
-        // skal muligvis stoppes inden reschedule
-        timer.schedule(timerTask, delay, period);
-    }
-
-    public void stopAnalysis() {
-        timer.cancel();
-        timer.purge();
-    }
-
-    public void analysisParameters(Intent intent) {
-        period = intent.getIntExtra("period", 1000);
-        delay = intent.getIntExtra("delay", 0);
     }
 
 }

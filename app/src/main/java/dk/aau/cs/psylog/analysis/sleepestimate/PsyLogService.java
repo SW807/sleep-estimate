@@ -23,15 +23,14 @@ public class PsyLogService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flag, int startid)
     {
-        estimator.analysisParameters(intent);
-        estimator.startAnalysis();
+        estimator.analyse();
         return Service.START_STICKY;
     }
 
     @Override
     public void onDestroy()
     {
-        estimator.stopAnalysis();
+        super.onDestroy();
     }
 
 }

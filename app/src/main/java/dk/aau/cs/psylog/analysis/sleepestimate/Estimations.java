@@ -8,15 +8,6 @@ public class Estimations {
     String startTime;
     String endTime;
 
-    public Estimations(int pred, String st, String et)
-    {
-        if (pred == 1 )
-            prediction = "wake";
-        else prediction = "sleep";
-        startTime = st;
-        endTime = et;
-    }
-
     public Estimations(String pred, String st, String et)
     {
         prediction = pred;

@@ -5,9 +5,9 @@
         {
             "name": "sleepestimates",
             "columns":[
-                { "name": "estimation", "datatype": "TEXT"}
-                { "name": "startTime", "datatype": "TEXT"}
-                { "name": "endTime", "datatype": "TEXT"}
+                { "name": "estimation", "dataType": "TEXT"},
+                { "name": "startTime", "dataType": "TEXT"},
+                { "name": "endTime", "dataType": "TEXT"}
             ]
         }
     ],
