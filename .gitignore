@@ -32,3 +32,5 @@ build/
 
 # Generated files 
 app/src/main/java/dk/aau/cs/psylog/generated/*
+.idea/libraries/support_v4_21_0_3.xml
+.idea/workspace.xml
