@@ -50,9 +50,7 @@ public class SleepEstimator {
         String[] projection = {"accX", "accY", "accZ", "time"};
         Cursor cursor = resolver.query(read, projection, null, null, null);
         Log.e("LARS", "read complete, size "+ cursor.getCount());
-        //kan skrives som et call
-        //synes dette er mere læseligt
-        //dog nok også mindre efficient
+
         List<AccelData> data = extract(cursor);
         Log.e("LARS","extraction size " + data.size()+ " moving to movAVG");
         List<AccelData> movAvg = movingAvg(data);
@@ -62,11 +60,11 @@ public class SleepEstimator {
         Log.e("LARS", "starting evaluation");
         List<Estimations> evaluation = estimate(normalizedData);
         Log.e("LARS", "compressions");
-        //List<Estimations> toStore = compress(evaluation);
+        List<Estimations> toStore = compress(evaluation);
 
         Log.e("LARS", "starting store");
         ContentValues contentValues = new ContentValues();
-        for (Estimations e: evaluation)
+        for (Estimations e: toStore)
         {
             contentValues.put("estimation", e.prediction);
             contentValues.put("startTime", e.startTime);
@@ -79,6 +77,7 @@ public class SleepEstimator {
     public List<AccelData> extract(Cursor cursor)
     {
         List<AccelData> content = new ArrayList<>();
+        int i = 1;
         if (cursor.moveToFirst())
         {
             do {
@@ -115,73 +114,18 @@ public class SleepEstimator {
 
     public List<NormalizedWithTime> normalizer(List<AccelData> input){
         List<NormalizedWithTime> normalized = new ArrayList<>();
-        List<AccelData> diffTable = new ArrayList<>();
 
-        float diffXup = 0;
-        float diffXbot = 100;
-        float diffYup = 0;
-        float diffYbot = 100;
-        float diffZup = 0;
-        float diffZbot = 100;
-
-        int i = 5;
+        int i = 1;
         while (i < input.size())
         {
-            float diffX = findDiff5(input.get(i).x, input.get(i - 1).x, input.get(i - 2).x, input.get(i - 3).x, input.get(i - 4).x, input.get(i - 5).x);
-            float diffY = findDiff5(input.get(i).y, input.get(i - 1).y, input.get(i - 2).y, input.get(i - 3).y, input.get(i - 4).y, input.get(i - 5).y);
-            float diffZ = findDiff5(input.get(i).z, input.get(i - 1).z, input.get(i - 2).z, input.get(i - 3).z, input.get(i - 4).z, input.get(i - 5).z);
-
-            if (diffX > diffXup)
-                diffXup = diffX;
-            if (diffX < diffXbot)
-                diffXbot = diffX;
-            if (diffY > diffYup)
-                diffYup = diffY;
-            if (diffY < diffYbot)
-                diffYbot = diffY;
-            if (diffZ > diffZup)
-                diffZup = diffZ;
-            if (diffZ < diffZbot)
-                diffZbot = diffZ;
-
-            diffTable.add(new AccelData(diffX, diffY, diffZ, input.get(i).time));
+            float diffX = Math.abs(input.get(i).x-input.get(i-1).x);
+            float diffY = Math.abs(input.get(i).y-input.get(i-1).y);
+            float diffZ = Math.abs(input.get(i).z-input.get(i-1).z);
+            normalized.add(new NormalizedWithTime(diffX, diffY, diffZ, input.get(i).time));
             i++;
         }
-        float varX = diffXup - diffXbot;
-        float varY = diffYup - diffYbot;
-        float varZ = diffZup - diffZbot;
 
-        for (AccelData a:diffTable)
-        {
-            float x,y,z, intense;
-            x = findIntense(a.x, varX);
-            y = findIntense(a.y, varY);
-            z = findIntense(a.z, varZ);
-            intense = (x + y + z) / 3;
-
-            normalized.add(new NormalizedWithTime(intense, a.time));
-
-        }
         return normalized;
-    }
-
-    public float findDiff5(float curr, float x1, float x2, float x3, float x4, float x5)
-    {
-        float diff1, diff2, diff3, diff4, diff5;
-        diff1 = Math.abs(curr-x1);
-        diff2 = Math.abs(curr-x2);
-        diff3 = Math.abs(curr-x3);
-        diff4 = Math.abs(curr-x4);
-        diff5 = Math.abs(curr-x5);
-
-        return (diff1+diff2+diff3+diff4+diff5)/5;
-    }
-
-    public float findIntense(float currDiff, float varDiff)
-    {
-        if (currDiff != 0)
-            return currDiff / varDiff;
-        else return 0;
     }
 
     public List<Estimations> estimate(List<NormalizedWithTime> input){
@@ -191,18 +135,19 @@ public class SleepEstimator {
         int i = 1;
         int k = 0;
         int len = input.size();
-        int num = getFourMinWindown(input);
+        int num = getFourMinWindown(j, input);
 
         String startTime, endTime;
         String pred;
-        while (j <= len - num)
+
+        AccelData thres = threshhold(input);
+        while (j < len - num)
         {
             startTime = input.get(j).time;
             endTime = input.get(j+num).time;
-            float thres = threshhold(input);
             while (i <= num)
             {
-                if (input.get(i+j).intensity > thres)
+                if (thresholdCompare(thres, input.get(i+j)))
                     count ++;
                 i++;
             }
@@ -216,63 +161,101 @@ public class SleepEstimator {
             i = 1;
             k ++;
             j = j + num;
-
+            num = getFourMinWindown(j,input);
         }
 
         return state;
 
     }
 
-    public float stdDeviation(List<NormalizedWithTime> input){
-        float lowest = (float) Double.MAX_VALUE;
-        float highest= (float) Double.MIN_VALUE;
+    public AccelData stdDeviation(List<NormalizedWithTime> input){
+        float lowestX = (float) Double.MAX_VALUE;
+        float lowestY = (float) Double.MAX_VALUE;
+        float lowestZ = (float) Double.MAX_VALUE;
+        float highestX = (float) Double.MIN_VALUE;
+        float highestY = (float) Double.MIN_VALUE;
+        float highestZ = (float) Double.MIN_VALUE;
+
 
         for (NormalizedWithTime n:input)
         {
-            if (n.intensity > highest)
-                highest = n.intensity;
-            if (n.intensity < lowest)
-                lowest = n.intensity;
+            if (n.diffX > highestX)
+                highestX = n.diffX;
+            if (n.diffX < lowestX)
+                lowestX = n.diffX;
+            if (n.diffY > highestY)
+                highestY = n.diffY;
+            if (n.diffY < lowestY)
+                lowestY = n.diffY;
+            if (n.diffZ > highestZ)
+                highestZ = n.diffZ;
+            if (n.diffZ < lowestZ)
+                lowestZ = n.diffZ;
         }
-
-        return highest - lowest;
+        //return new AccelData(highestX-lowestX, highestY-lowestY, highestZ-lowestZ, "");
+        return new AccelData(0,0,0,"");
     }
 
 
-    public float mean(List<NormalizedWithTime> input){
-        float sum = 0;
+    public AccelData mean(List<NormalizedWithTime> input){
+        float sumX = 0;
+        float sumY = 0;
+        float sumZ = 0;
 
         for (NormalizedWithTime n: input)
         {
-            sum += n.intensity;
+            sumX += n.diffX;
+            sumY += n.diffY;
+            sumZ += n.diffZ;
         }
 
-        return sum / input.size();
+        int div = input.size();
+        return new AccelData(sumX / div, sumY / div, sumZ / div, "");
     }
 
-    public float threshhold(List<NormalizedWithTime> input)
+    public AccelData threshhold(List<NormalizedWithTime> input)
     {
-        float mean = mean(input);
-        float std = stdDeviation(input);
+        AccelData mean = mean(input);
+        AccelData std = stdDeviation(input);
 
-        return (mean + std)/2;
+        AccelData output = new AccelData((mean.x+std.x) , (mean.y+std.y) , (mean.z+std.z) , "");
+
+        Log.e("LARS", "stdDeviation, X: "+std.x + " Y: "+ std.x + " Z: " +std.z);
+        Log.e("LARS", "mean, X: "+mean.x + " Y: "+ mean.x + " Z: " +mean.z);
+        Log.e("LARS", "Threshold, X: "+output.x + " Y: "+ output.x + " Z: " +output.z);
+        return output;
     }
 
     //skal bruge en måde at extract time på
-    public int getFourMinWindown (List<NormalizedWithTime> input)
+    public int getFourMinWindown (int j, List<NormalizedWithTime> input)
     {
-        int i = 1;
-        Date startTime = convertTimeString(input.get(0).time);
+        int i = j+1;
+        Date startTime = convertTimeString(input.get(j).time);
+
 
         Boolean condition = true;
-        while (condition)
+        while (condition && i < input.size())
         {
             Date startTime2 = convertTimeString(input.get(i).time);
+            //240.000 should be 4 minutes in miliseconds
             if (startTime.getTime()+240000 < startTime2.getTime())
                 condition = false;
             else i++;
         }
-        return i;
+        return i-j;
+    }
+
+    public boolean thresholdCompare (AccelData threshold, NormalizedWithTime toCompare)
+    {
+        if (toCompare.diffX > threshold.x)
+            return true;
+        if (toCompare.diffY > threshold.y)
+            return true;
+        if (toCompare.diffZ > threshold.z)
+            return true;
+
+        return false;
+
     }
 
     public List<Estimations> compress (List<Estimations> input)

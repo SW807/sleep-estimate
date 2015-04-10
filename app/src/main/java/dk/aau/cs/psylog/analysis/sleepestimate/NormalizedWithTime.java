@@ -4,12 +4,14 @@ package dk.aau.cs.psylog.analysis.sleepestimate;
  * Created by Lars on 23-03-2015.
  */
 public class NormalizedWithTime {
-    float intensity;
+    float diffX, diffY, diffZ;
     String time;
 
-    public NormalizedWithTime(float i, String t)
+    public NormalizedWithTime(float x, float y, float z, String t)
     {
-        intensity = i;
+        diffX = x;
+        diffY = y;
+        diffZ = z;
         time = t;
     }
 }
