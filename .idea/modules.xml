@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/sleep.iml" filepath="$PROJECT_DIR$/sleep.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sleep-estimate.iml" filepath="$PROJECT_DIR$/sleep-estimate.iml" />
     </modules>
   </component>
 </project>
