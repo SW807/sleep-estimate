@@ -2,7 +2,7 @@
     "name": "sleepestimate",
     "_userfriendlyname": "Søvn estimering",
     "_version": 1.0,
-    "_description": "Måler og opbevarer om telefonens bruger sover."
+    "_description": "Måler og opbevarer om telefonens bruger sover.",
     "tables":[
         {
             "name": "sleepestimates",
